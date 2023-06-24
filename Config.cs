@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 using VRageMath;
 
-
 namespace SEBR_NAMESPACE
 {
     /// <summary>

@@ -12,8 +12,6 @@ using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
 
-/* The game works as follows: a faction must either have players on planet or a functional medbay in the zone to be considered "alive". */
-
 namespace SEBR_NAMESPACE
 {
     /// <summary>

@@ -1,29 +1,20 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
 
 using Sandbox.Game;
-using Sandbox.Definitions;
+using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
-using Sandbox.ModAPI.Interfaces;
+
+using VRage.Input;
 using VRage.Game;
-using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRage.Game.Entity;
 using VRage.Utils;
 using VRageMath;
-using BlendTypeEnum = VRageRender.MyBillboard.BlendTypeEnum;
-using VRage.Input;
-using System.Linq;
-using Sandbox.Game.Screens.Helpers;
-using System.Text;
-
-using Sandbox.Game.Entities;
-using Sandbox.Game.Entities.Blocks;
-
 using VRageRender;
 
-using static Sandbox.Game.MyVisualScriptLogicProvider;
+using BlendTypeEnum = VRageRender.MyBillboard.BlendTypeEnum;
 
 namespace SEBR_NAMESPACE
 {
