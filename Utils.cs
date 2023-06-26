@@ -11,6 +11,12 @@ namespace SEBR_NAMESPACE
 {
     public static class SEBR_UTILS
     {
+
+        public static bool IsPlayerBot(IMyPlayer player)
+        {
+            return player.DisplayName == null || player.SteamUserId == null || player.IsBot;
+        }
+
         /// <summary>
         /// Method <c>AreDecoysWithinRadius</c> determines if a decoy is in radius. It is mostly stolen from Jakaria's lightning code.
         /// </summary>

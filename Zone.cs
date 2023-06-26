@@ -54,6 +54,7 @@ namespace SEBR_NAMESPACE
         public int SYNC_TICK_TIME = SEBR_CONFIG.syncTime;
         public bool DEBUG = SEBR_CONFIG.debug;
         public List<SEBR_STAGE> SEBR_STAGES = SEBR_CONFIG.stages;
+        public List<string> AI_ENABLED_FACTIONS = SEBR_CONFIG.aiEnabledFactions;
         private List<SEBR_STAGE> DEBUG_STAGES = SEBR_CONFIG.debugStages;
         public Dictionary<string, string> SEBR_FACTIONS = SEBR_CONFIG.factions;
         private List<string> SEBR_HINTS = SEBR_CONFIG.hints;
@@ -79,7 +80,7 @@ namespace SEBR_NAMESPACE
         private int lightningTick = 0;
         private double cylinderHeight = 10000;
         private int altitudeExclude = 33000;
-        private List<IMyPlayer> playerList = new List<IMyPlayer>();
+        private Dictionary<long,IMyPlayer> playerList = new Dictionary<long,IMyPlayer>();
         private Random random = new Random();
         private const float updateRate = 1 / 60f;
         private const ushort msgtag = 17586;
@@ -231,7 +232,7 @@ namespace SEBR_NAMESPACE
 
             foreach (var faction in MyAPIGateway.Session.Factions.Factions.Values)
             {
-                if (faction.Tag == "SPRT" || !SEBR_FACTIONS.TryGetValue(faction.Tag, out name))
+                if (!SEBR_FACTIONS.TryGetValue(faction.Tag, out name) && !AI_ENABLED_FACTIONS.Contains(faction.Tag))
                     illegalFactions.Add(faction.FactionId);
             }
 
@@ -414,7 +415,7 @@ namespace SEBR_NAMESPACE
             altitudeExclude = (int)planet.MinimumRadius + (int)(cylinderHeight / 2);
 
             // if our player is on the planet, add his faction to the list of factions alive
-            foreach (IMyPlayer player in playerList)
+            foreach (IMyPlayer player in playerList.Values)
             {
                 if (player == null || player.Character == null)
                     continue;
@@ -455,20 +456,19 @@ namespace SEBR_NAMESPACE
 
             if (MyAPIGateway.Session.OnlineMode == MyOnlineModeEnum.OFFLINE)
             {
-                playerList.Add(MyAPIGateway.Session.Player);
+                playerList.Add(0L,MyAPIGateway.Session.Player);
                 return;
             }
 
-            MyAPIGateway.Players.GetPlayers(playerList);
-            int j = playerList.Count;
-            for (int i = 0; i < j; i++)
+            List<IMyPlayer> temporaryList = new List<IMyPlayer>();
+            MyAPIGateway.Players.GetPlayers(temporaryList);
+
+            foreach(IMyPlayer player in temporaryList)
             {
-                if (playerList[i].DisplayName == null || playerList[i].SteamUserId == null || playerList[i].IsBot)
-                {
-                    playerList.RemoveAt(i);
-                    j--;
-                    i--;
-                }
+                if (SEBR_UTILS.IsPlayerBot(player))
+                    continue;
+
+                playerList.Add(player.IdentityId, player);
             }
         }
 
@@ -482,19 +482,19 @@ namespace SEBR_NAMESPACE
 
             List<IMyPlayer> NoFactionPlayers = new List<IMyPlayer>();
 
-            foreach (var p in playerList)
+            foreach (var player in playerList.Values)
             {
-                if (p.Character != null)
+                if (player.Character != null)
                 {
-                    var tempFaction = MyAPIGateway.Session.Factions.TryGetPlayerFaction(p.IdentityId);
+                    var tempFaction = MyAPIGateway.Session.Factions.TryGetPlayerFaction(player.IdentityId);
                     if (tempFaction == null)
                     {
                         var AllFactions = MyAPIGateway.Session.Factions.Factions;
                         foreach (var factionKey in AllFactions.Keys)
                         {
-                            if (AllFactions[factionKey].Members.Count < SQUAD_NUMBER + 1 && AllFactions[factionKey].Tag != "SPRT" && AllFactions[factionKey].Tag != ADMIN_FACTION_TAG)
+                            if (AllFactions[factionKey].Members.Count < SQUAD_NUMBER + 1 && !AI_ENABLED_FACTIONS.Contains(AllFactions[factionKey].Tag))
                             {
-                                MyAPIGateway.Session.Factions.SendJoinRequest(AllFactions[factionKey].FactionId, p.IdentityId);
+                                MyAPIGateway.Session.Factions.SendJoinRequest(AllFactions[factionKey].FactionId, player.IdentityId);
                                 break;
                             }
                         }
@@ -521,7 +521,7 @@ namespace SEBR_NAMESPACE
             MyVisualScriptLogicProvider.ShowNotificationToAll("WINNER WINNER CHICKEN DINNER!", 16 * 60 * 10, "Green");
 
             foreach (KeyValuePair<long, MyFactionMember> pair in fac.Members)
-                foreach (IMyPlayer player in playerList)
+                foreach (IMyPlayer player in playerList.Values)
                     if (player != null && player.IdentityId == pair.Value.PlayerId)
                         MyVisualScriptLogicProvider.ShowNotificationToAll($"{player.DisplayName} survived!", 16 * 60 * 10, "Green");
 
@@ -779,9 +779,9 @@ namespace SEBR_NAMESPACE
         /// </summary>
         private void SyncAllPlayers()
         {
-            foreach (IMyPlayer playa in playerList)
+            foreach (IMyPlayer player in playerList.Values)
             {
-                SyncPlayer(playa.IdentityId);
+                SyncPlayer(player.IdentityId);
             }
         }
 
@@ -825,16 +825,10 @@ namespace SEBR_NAMESPACE
         private void HandlePlayerFactionChanged(MyFactionStateChange change, long fromFactionId, long factionId, long playerId, long senderId)
         {
             IMyFaction faction = MyAPIGateway.Session.Factions.TryGetFactionById(factionId);
-            /*
-            string message = $"change {change}\n" +
-                $"fromFactionId {fromFactionId}\n" +
-                $"toFactionId {factionId}\n" +
-                $"playerId {playerId}\n" +
-                $"count {faction.Members.Count}\n" +
-                $"senderId {senderId}\n";
+            IMyPlayer player;
+            if (faction == null || !playerList.TryGetValue(playerId, out player))
+                return;
 
-            MyAPIGateway.Utilities.ShowNotification(message, 3000);
-            */
             // If someone joins
             if (change == MyFactionStateChange.FactionMemberAcceptJoin)
             {
@@ -864,7 +858,7 @@ namespace SEBR_NAMESPACE
 
             string name;
 
-            if (!SEBR_FACTIONS.TryGetValue(faction.Tag, out name))
+            if (!SEBR_FACTIONS.TryGetValue(faction.Tag, out name) && !AI_ENABLED_FACTIONS.Contains(faction.Tag))
                 illegalFactions.Add(factionId);
         }
 
@@ -911,7 +905,7 @@ namespace SEBR_NAMESPACE
 
             IMyCubeGrid grid = entity as IMyCubeGrid;
 
-            if (!grid.CustomName.Contains("SEBR") || grid.CustomName.Contains("STATION"))
+            if (!grid.CustomName.Contains("SEBR") || grid.CustomName.Contains("STATION") || grid.CustomName.Contains("POD"))
                 return;
 
             MyVisualScriptLogicProvider.ChangeOwner(entity.Name, 0L, true, true);

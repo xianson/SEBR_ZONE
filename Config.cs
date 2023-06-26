@@ -14,7 +14,7 @@ namespace SEBR_NAMESPACE
         public static int gameStage = 2; // stage when game "starts" - doors open, zone appears
         public static int endPossibleStage = 5; // stage when the game is allowed to end by elim
         public static string adminFactionTag = "SEBR"; // this tag is ignored for faction operations
-        public static int minPlayers = 5; // number of players to wait for before start
+        public static int minPlayers = 1; // number of players to wait for before start
         public static int maxPlayers = 25; // not really important / used, for display purposes only
         public static int syncTime = 1200; // how often we should syncAllPlayers - lower number is faster
         public static bool debug = true; // runs the gauntlet as fast as possible
@@ -59,7 +59,7 @@ namespace SEBR_NAMESPACE
             // stages[1] Lobby phase - game does not proceed until minplayers!
             new SEBR_STAGE(5,15000f,Vector3D.Zero,DateTime.Today),
             // stages[gameStage] When this stage starts, teams are assigned and effects play - Game has started!
-            new SEBR_STAGE(5,15000f,Vector3D.Zero,DateTime.Today),
+            new SEBR_STAGE(300,15000f,Vector3D.Zero,DateTime.Today),
             // first shrink set
             new SEBR_STAGE(5,10000f,Vector3D.Zero,DateTime.Today),
             new SEBR_STAGE(5,10000f,Vector3D.Zero,DateTime.Today),
@@ -108,7 +108,47 @@ namespace SEBR_NAMESPACE
             { "MOO", "Squad Moose" },
             { "ROO", "Squad Raccoon" },
             { "OPO", "Squad Opossum" },
-            { "ANT", "Squad Antelope" }
+            { "ANT", "Squad Antelope" },
+            { "SEBR","Space Engineers Battle Royale"},
+            { "SPRT","Space Pirates" },
+        };
+        public static List<string> aiEnabledFactions = new List<string>()
+        {
+            "SEBR",
+            "SPRT",
+            "NOMAD",
+            "BINC",
+            "SCDS",
+            "OTFI",
+            "UNIT",
+            "BLBT",
+            "LEGN",
+            "OBSD",
+            "FLWR",
+            "AZRE",
+            "RSBC",
+            "ENGR",
+            "MDFR",
+            "ALPB",
+            "DMGD",
+            "BTTL",
+            "MCHB",
+            "PRME",
+            "PREN",
+            "SENT",
+            "JKHP",
+            "RCDR",
+            "OPER",
+            "MTLM",
+            "CRTG",
+            "FIBR",
+            "PCKP",
+            "FGHT",
+            "FUTR",
+            "CLBT",
+            "BLDR",
+            "CLTR",
+            "OBSR"
         };
         public static List<string> hints = new List<string>()
         {
